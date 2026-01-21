@@ -38,8 +38,15 @@ function OrderDetailsContent() {
   const [commentText, setCommentText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<Map<string, File>>(new Map());
   const [error, setError] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     if (!isAuthenticated()) {
       router.push('/login');
       return;
@@ -62,7 +69,7 @@ function OrderDetailsContent() {
 
     loadAllowedStatuses(finalStoreId);
     loadOrderDetails(orderId, finalStoreId);
-  }, [orderId, storeIdParam, router]);
+  }, [orderId, storeIdParam, router, isClient]);
 
   const loadAllowedStatuses = async (store: '1' | '2') => {
     try {

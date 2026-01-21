@@ -16,14 +16,21 @@ export default function AdminSettingsPage() {
   const [bellanoSearch, setBellanoSearch] = useState('');
   const [nallaSearch, setNallaSearch] = useState('');
   const [error, setError] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     if (!isAuthenticated()) {
       router.push('/login');
       return;
     }
     loadStatuses();
-  }, [router]);
+  }, [router, isClient]);
 
   const loadStatuses = async () => {
     try {

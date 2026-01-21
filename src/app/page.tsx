@@ -1,19 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/utils/helpers';
 
 export default function HomePage() {
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     if (isAuthenticated()) {
       router.push('/driver-schedule');
     } else {
       router.push('/login');
     }
-  }, [router]);
+  }, [router, isClient]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
