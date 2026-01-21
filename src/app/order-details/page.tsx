@@ -228,7 +228,7 @@ function OrderDetailsContent() {
       <select
         value=""
         onChange={(e) => handleStatusChange(e.target.value)}
-        className="p-2 border rounded"
+        className="p-2 border rounded w-full sm:w-auto text-sm sm:text-base"
       >
         <option value="">בחר סטטוס לשינוי</option>
         {completionStatuses.length > 0 && (
@@ -323,11 +323,11 @@ function OrderDetailsContent() {
 
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.back()}
-                className="bg-gray-100 p-2 rounded-md hover:bg-gray-200 transition-colors"
+                className="bg-gray-100 p-2 rounded-md hover:bg-gray-200 transition-colors flex-shrink-0"
               >
                 <svg
                   className="h-5 w-5"
@@ -343,14 +343,14 @@ function OrderDetailsContent() {
                   />
                 </svg>
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 הזמנה #{order.number || order.id}
               </h1>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">סטטוס:</label>
+                <label className="text-sm text-gray-600 whitespace-nowrap">סטטוס:</label>
                 {renderStatusSelect()}
               </div>
               <SignatureForms
@@ -369,23 +369,23 @@ function OrderDetailsContent() {
           {/* Left Column - Products & Comments */}
           <div className="order-2 lg:order-1 lg:col-span-8 space-y-8">
             {/* Products Section */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">פרטי המוצרים</h2>
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">פרטי המוצרים</h2>
               <div className="space-y-4">
                 {order.line_items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex justify-between p-4 border-b"
+                    className="flex flex-col sm:flex-row sm:justify-between p-3 sm:p-4 border-b gap-3"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       {item.image ? (
                         <img
                           src={item.image.src}
                           alt={item.name}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                           <svg
                             className="w-8 h-8 text-gray-400"
                             fill="none"
@@ -396,31 +396,31 @@ function OrderDetailsContent() {
                           </svg>
                         </div>
                       )}
-                      <div>
-                        <h3 className="font-medium">{item.name}</h3>
-                        <p className="text-gray-600">כמות: {item.quantity}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-sm sm:text-base line-clamp-2">{item.name}</h3>
+                        <p className="text-gray-600 text-sm">כמות: {item.quantity}</p>
                       </div>
                     </div>
-                    <div className="text-left">{formatPrice(item.total)}</div>
+                    <div className="text-left font-medium text-sm sm:text-base self-end sm:self-center">{formatPrice(item.total)}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Staff Notes Section */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">הערות מנהל</h2>
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">הערות מנהל</h2>
 
               {/* Comment Form */}
               <div className="mb-4 space-y-4">
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 p-3 min-h-[100px] resize-y"
+                  className="w-full rounded-lg border border-gray-300 p-3 min-h-[80px] sm:min-h-[100px] resize-y text-sm sm:text-base"
                   placeholder="הוסף הערה..."
                 />
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="file"
                     id="fileUpload"
@@ -432,7 +432,7 @@ function OrderDetailsContent() {
                   <button
                     type="button"
                     onClick={() => document.getElementById('fileUpload')?.click()}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 flex-1 sm:flex-none text-sm sm:text-base"
                   >
                     <svg
                       className="w-5 h-5"
@@ -452,7 +452,7 @@ function OrderDetailsContent() {
                   <button
                     type="button"
                     onClick={submitCommentWithFiles}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex-1 sm:flex-none text-sm sm:text-base"
                   >
                     הוסף
                   </button>
@@ -498,8 +498,8 @@ function OrderDetailsContent() {
           {/* Right Column - Customer Details */}
           <div className="order-1 lg:order-2 lg:col-span-4 space-y-8">
             {/* Customer Details */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">פרטי לקוח</h2>
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">פרטי לקוח</h2>
               <div className="space-y-3">
                 <div>
                   <label className="text-sm text-gray-500">שם מלא</label>
@@ -538,8 +538,8 @@ function OrderDetailsContent() {
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">סיכום הזמנה</h2>
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">סיכום הזמנה</h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">סה״כ ששולם</span>
@@ -555,8 +555,8 @@ function OrderDetailsContent() {
             </div>
 
             {/* Customer Notes */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">הערות לקוח</h2>
+            <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">הערות לקוח</h2>
               {order.customer_note && order.customer_note.trim() ? (
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <div className="text-gray-800">{order.customer_note}</div>
