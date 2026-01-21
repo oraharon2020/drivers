@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, queryOne } from '@/lib/db';
-import { generateToken, verifyWordPressPassword } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
+import { config } from '@/lib/config';
 
-interface WPUser {
-  ID: number;
-  user_login: string;
-  user_pass: string;
-}
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,56 +16,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user in database
-    const user = await queryOne<WPUser>(
-      `SELECT ID, user_login, user_pass 
-       FROM wp_users 
-       WHERE (user_login = ? OR user_email = ?) 
-       AND user_status = 0`,
-      [username.trim(), username.trim()]
+    // Try to authenticate via WordPress REST API
+    // Using admin.nalla.co.il WordPress
+    const wpUrl = config.stores['2'].url; // admin.nalla.co.il
+    
+    // WordPress JWT Authentication or Application Passwords
+    const authResponse = await fetch(`${wpUrl}/wp-json/jwt-auth/v1/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.trim(),
+        password: password.trim(),
+      }),
+    });
+
+    if (authResponse.ok) {
+      const wpData = await authResponse.json();
+      
+      // Generate our own JWT token
+      const token = generateToken({
+        user_id: wpData.user_id || 1,
+        username: wpData.user_nicename || username,
+      });
+
+      return NextResponse.json({
+        success: true,
+        token,
+        username: wpData.user_nicename || username,
+      });
+    }
+
+    // If JWT plugin not installed, try basic auth validation
+    const basicAuthResponse = await fetch(`${wpUrl}/wp-json/wp/v2/users/me`, {
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${username.trim()}:${password.trim()}`).toString('base64'),
+      },
+    });
+
+    if (basicAuthResponse.ok) {
+      const userData = await basicAuthResponse.json();
+      
+      const token = generateToken({
+        user_id: userData.id,
+        username: userData.slug || username,
+      });
+
+      return NextResponse.json({
+        success: true,
+        token,
+        username: userData.slug || username,
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, message: 'שם משתמש או סיסמה שגויים' },
+      { status: 401 }
     );
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'שם משתמש או סיסמה שגויים' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = verifyWordPressPassword(password.trim(), user.user_pass);
-
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { success: false, message: 'שם משתמש או סיסמה שגויים' },
-        { status: 401 }
-      );
-    }
-
-    // Generate JWT token
-    const token = generateToken({
-      user_id: user.ID,
-      username: user.user_login,
-    });
-
-    return NextResponse.json({
-      success: true,
-      token,
-      username: user.user_login,
-    });
   } catch (error: unknown) {
     console.error('Auth error:', error);
-    
-    // Check for connection errors
-    if (error && typeof error === 'object' && 'code' in error) {
-      const err = error as { code: string };
-      if (err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED') {
-        return NextResponse.json(
-          { success: false, message: 'שגיאת חיבור למסד הנתונים - נסה שוב מאוחר יותר' },
-          { status: 503 }
-        );
-      }
-    }
     
     return NextResponse.json(
       { success: false, message: 'שגיאה בהתחברות' },
