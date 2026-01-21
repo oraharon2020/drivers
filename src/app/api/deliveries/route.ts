@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth';
-import { query } from '@/lib/db';
 import { Delivery } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-interface DeliveryRow {
-  id: number;
-  order_id: string;
-  store_id: string;
-  store_name: string | null;
-  order_number: string | null;
-  shipping_address: string | null;
-  phone: string | null;
-  time_slot: string | null;
-  customer_name: string | null;
-  status: string | null;
-  total_items: number;
-  products: string | null;
-}
+const PROXY_URL = 'https://driver.nalla.co.il/api-proxy.php';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,36 +27,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const rows = await query<DeliveryRow>(
-      `SELECT 
-        da.*,
-        COALESCE(da.store_name, 
-          CASE 
-            WHEN da.store_id = '1' THEN 'בלאנו'
-            WHEN da.store_id = '2' THEN 'נלה'
-            ELSE 'לא ידוע'
-          END
-        ) as store_name
-      FROM wp_delivery_assignments da
-      WHERE da.driver_id = ?
-      AND DATE(da.delivery_date) = ?
-      ORDER BY da.sequence ASC, da.id ASC`,
-      [user.user_id, date]
+    // Call the PHP proxy API
+    const proxyResponse = await fetch(
+      `${PROXY_URL}?action=get_deliveries&date=${date}&user_id=${user.user_id}`
     );
+    
+    const proxyData = await proxyResponse.json();
+    
+    if (!proxyData.success) {
+      return NextResponse.json(
+        { success: false, message: proxyData.message || 'שגיאה בטעינת המשלוחים' },
+        { status: 500 }
+      );
+    }
 
-    const deliveries: Delivery[] = rows.map((row) => ({
-      id: row.id,
-      order_id: row.order_id,
-      store_id: row.store_id,
-      store_name: row.store_name || 'לא ידוע',
-      order_number: row.order_number || row.order_id,
-      shipping_address: row.shipping_address || 'לא זמין',
-      phone: row.phone || 'לא זמין',
-      time_slot: row.time_slot || 'לא נקבע',
-      customer_name: row.customer_name || 'לא זמין',
-      status: row.status || 'pending',
-      total_items: row.total_items || 0,
-      products: row.products ? JSON.parse(row.products) : [],
+    const deliveries: Delivery[] = (proxyData.data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as number,
+      order_id: row.order_id as string,
+      store_id: row.store_id as string,
+      store_name: (row.store_name as string) || 'לא ידוע',
+      order_number: (row.order_number as string) || (row.order_id as string),
+      shipping_address: (row.shipping_address as string) || 'לא זמין',
+      phone: (row.phone as string) || 'לא זמין',
+      time_slot: (row.time_slot as string) || 'לא נקבע',
+      customer_name: (row.customer_name as string) || 'לא זמין',
+      status: (row.status as string) || 'pending',
+      total_items: (row.total_items as number) || 0,
+      products: row.products ? JSON.parse(row.products as string) : [],
     }));
 
     return NextResponse.json({
