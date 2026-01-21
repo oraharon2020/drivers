@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // נתיבים שלא דורשים אימות
-const publicPaths = ['/login', '/api/auth'];
+const publicPaths = ['/login', '/api'];
 
 // נתיבים של assets שלא צריכים בדיקה
 const assetPaths = ['/_next', '/assets', '/favicon.ico', '/manifest.json'];

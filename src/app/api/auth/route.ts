@@ -35,9 +35,23 @@ export async function POST(request: NextRequest) {
     if (authResponse.ok) {
       const wpData = await authResponse.json();
       
+      // Extract user_id from the WordPress JWT token
+      let userId = 1;
+      if (wpData.token) {
+        try {
+          const tokenParts = wpData.token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+            userId = payload.data?.user?.id ? parseInt(payload.data.user.id) : 1;
+          }
+        } catch (e) {
+          console.error('Error parsing WP token:', e);
+        }
+      }
+      
       // Generate our own JWT token
       const token = generateToken({
-        user_id: wpData.user_id || 1,
+        user_id: userId,
         username: wpData.user_nicename || username,
       });
 
