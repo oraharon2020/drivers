@@ -92,6 +92,9 @@ export function setAuthData(token: string, username: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('token', token);
   localStorage.setItem('username', username);
+  
+  // Also set cookie for middleware
+  document.cookie = `auth_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
 }
 
 // Clear auth data
@@ -99,6 +102,9 @@ export function clearAuthData(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('token');
   localStorage.removeItem('username');
+  
+  // Also clear cookie
+  document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 }
 
 // Detect store from order ID
