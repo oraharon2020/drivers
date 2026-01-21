@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to authenticate via WordPress REST API
-    // Using admin.nalla.co.il WordPress
-    const wpUrl = config.stores['2'].url; // admin.nalla.co.il
+    // Using driver.nalla.co.il WordPress with JWT plugin
+    const wpUrl = 'https://driver.nalla.co.il';
     
-    // WordPress JWT Authentication or Application Passwords
+    // WordPress JWT Authentication
     const authResponse = await fetch(`${wpUrl}/wp-json/jwt-auth/v1/token`, {
       method: 'POST',
       headers: {
