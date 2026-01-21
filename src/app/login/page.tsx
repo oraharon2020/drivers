@@ -12,8 +12,15 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     // Check if already authenticated
     if (isAuthenticated()) {
       router.push('/driver-schedule');
@@ -29,7 +36,7 @@ export default function LoginPage() {
       setPassword(savedPassword);
       setRememberMe(true);
     }
-  }, [router]);
+  }, [router, isClient]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

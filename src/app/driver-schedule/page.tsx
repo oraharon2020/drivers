@@ -12,16 +12,28 @@ export default function DriverSchedulePage() {
   const router = useRouter();
   const { show: showLoader, hide: hideLoader } = useLoader();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
-  const [selectedDate, setSelectedDate] = useState(formatDateForInput());
+  const [selectedDate, setSelectedDate] = useState('');
   const [error, setError] = useState('');
+  const [isClient, setIsClient] = useState(false);
+
+  // Set initial date on client side only
+  useEffect(() => {
+    setIsClient(true);
+    setSelectedDate(formatDateForInput());
+  }, []);
 
   useEffect(() => {
+    if (!isClient) return;
+    
     if (!isAuthenticated()) {
       router.push('/login');
       return;
     }
-    loadSchedule();
-  }, [selectedDate, router]);
+    
+    if (selectedDate) {
+      loadSchedule();
+    }
+  }, [selectedDate, router, isClient]);
 
   const loadSchedule = async () => {
     try {
