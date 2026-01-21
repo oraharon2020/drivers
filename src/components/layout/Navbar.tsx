@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { clearAuthData, getCurrentUsername } from '@/utils/helpers';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [username, setUsername] = useState('');
   const router = useRouter();
-  const username = getCurrentUsername();
+
+  useEffect(() => {
+    setUsername(getCurrentUsername());
+  }, []);
 
   const handleLogout = () => {
     clearAuthData();
