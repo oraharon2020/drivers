@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth';
 import { uploadToGoogleDrive } from '@/lib/google-drive';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const user = authenticateRequest(request);

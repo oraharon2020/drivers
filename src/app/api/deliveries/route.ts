@@ -3,6 +3,8 @@ import { authenticateRequest } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { Delivery } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 interface DeliveryRow {
   id: number;
   order_id: string;

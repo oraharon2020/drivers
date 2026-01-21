@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
-import { useLoader } from '@/components/ui/Loader';
+import { useLoader, Loader } from '@/components/ui/Loader';
 import { SignatureForms } from '@/components/forms/SignatureForms';
 import { getOrder, addOrderNote, updateOrderStatus, uploadFile, getAllStatuses } from '@/utils/api';
 import {
@@ -17,6 +17,14 @@ import {
 import type { WCOrder, AllowedStatuses, UploadedFile } from '@/types';
 
 export default function OrderDetailsPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <OrderDetailsContent />
+    </Suspense>
+  );
+}
+
+function OrderDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { show: showLoader, hide: hideLoader } = useLoader();

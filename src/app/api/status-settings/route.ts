@@ -3,6 +3,8 @@ import { authenticateRequest } from '@/lib/auth';
 import { createWooCommerceAPI } from '@/lib/woocommerce';
 import { StoreId } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 // Custom statuses for each store
 const customStatuses: Record<StoreId, string[]> = {
   '1': [

@@ -3,6 +3,8 @@ import { authenticateRequest } from '@/lib/auth';
 import { createWooCommerceAPI } from '@/lib/woocommerce';
 import { detectStoreId, StoreId } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = authenticateRequest(request);
