@@ -144,13 +144,19 @@ function OrderDetailsContent() {
     const files = Array.from(event.target.files || []);
     const newFiles = new Map(selectedFiles);
 
+    // Sanitize customer name - remove Hebrew and special characters
     const customerName = order
-      ? `${order.billing.first_name} ${order.billing.last_name}`.replace(/\s+/g, '_')
-      : '';
+      ? `${order.billing.first_name} ${order.billing.last_name}`
+          .replace(/[^\w\s]/g, '') // Remove non-word characters except spaces
+          .replace(/\s+/g, '_')    // Replace spaces with underscores
+          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII (Hebrew) characters
+      : 'customer';
 
     files.forEach((file, index) => {
-      const extension = file.name.split('.').pop() || '';
-      const newFileName = `${orderId}_${customerName}_${Date.now()}_${index}.${extension}`;
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      // Create a clean filename with only ASCII characters
+      const timestamp = Date.now();
+      const newFileName = `order_${orderId}_${timestamp}_${index}.${extension}`;
       const renamedFile = new File([file], newFileName, {
         type: file.type,
         lastModified: file.lastModified,
@@ -159,6 +165,8 @@ function OrderDetailsContent() {
     });
 
     setSelectedFiles(newFiles);
+    // Reset the input so the same files can be selected again
+    event.target.value = '';
   };
 
   const removeFile = (fileName: string) => {
@@ -174,16 +182,43 @@ function OrderDetailsContent() {
     }
 
     try {
-      showLoader('שומר...');
+      showLoader('מעלה קבצים...');
 
-      // Upload files
+      // Upload files one by one with progress
       const uploadedFiles: UploadedFile[] = [];
+      const failedFiles: string[] = [];
+      let uploadCount = 0;
+      const totalFiles = selectedFiles.size;
+
       for (const [fileName, file] of selectedFiles) {
-        const result = await uploadFile(file, orderId, storeId);
-        if (result.success && result.fileUrl) {
-          uploadedFiles.push({ name: fileName, url: result.fileUrl });
+        uploadCount++;
+        showLoader(`מעלה קובץ ${uploadCount} מתוך ${totalFiles}...`);
+        
+        try {
+          const result = await uploadFile(file, orderId, storeId);
+          if (result.success && result.fileUrl) {
+            uploadedFiles.push({ name: fileName, url: result.fileUrl });
+          } else {
+            failedFiles.push(fileName);
+            console.error(`Failed to upload ${fileName}:`, result.message);
+          }
+        } catch (uploadError) {
+          failedFiles.push(fileName);
+          console.error(`Error uploading ${fileName}:`, uploadError);
         }
       }
+
+      // Show warning if some files failed
+      if (failedFiles.length > 0) {
+        alert(`שים לב: ${failedFiles.length} קבצים לא הועלו בהצלחה`);
+      }
+
+      // If no files uploaded and no text, show error
+      if (uploadedFiles.length === 0 && !commentText.trim()) {
+        throw new Error('לא הצלחנו להעלות אף קובץ');
+      }
+
+      showLoader('שומר הערה...');
 
       // Build note text
       const username = getCurrentUsername();
