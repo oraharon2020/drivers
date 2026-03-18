@@ -140,33 +140,103 @@ function OrderDetailsContent() {
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const newFiles = new Map(selectedFiles);
+  // Compress image function
+  const compressImage = (file: File, maxWidth: number = 1920, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      // If not an image, return as-is
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
 
-    // Sanitize customer name - remove Hebrew and special characters
-    const customerName = order
-      ? `${order.billing.first_name} ${order.billing.last_name}`
-          .replace(/[^\w\s]/g, '') // Remove non-word characters except spaces
-          .replace(/\s+/g, '_')    // Replace spaces with underscores
-          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII (Hebrew) characters
-      : 'customer';
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Calculate new dimensions
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
 
-    files.forEach((file, index) => {
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      // Create a clean filename with only ASCII characters
-      const timestamp = Date.now();
-      const newFileName = `order_${orderId}_${timestamp}_${index}.${extension}`;
-      const renamedFile = new File([file], newFileName, {
-        type: file.type,
-        lastModified: file.lastModified,
-      });
-      newFiles.set(newFileName, renamedFile);
+          // Create canvas and draw resized image
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              
+              // Create new file from blob
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: file.lastModified,
+              });
+
+              console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`);
+              resolve(compressedFile);
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
     });
+  };
 
-    setSelectedFiles(newFiles);
-    // Reset the input so the same files can be selected again
-    event.target.value = '';
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    showLoader('מעבד תמונות...');
+    
+    try {
+      const newFiles = new Map(selectedFiles);
+
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        const extension = file.type.startsWith('image/') ? 'jpg' : (file.name.split('.').pop()?.toLowerCase() || 'jpg');
+        const timestamp = Date.now();
+        const newFileName = `order_${orderId}_${timestamp}_${index}.${extension}`;
+        
+        // Compress images before adding
+        const processedFile = await compressImage(file);
+        
+        const renamedFile = new File([processedFile], newFileName, {
+          type: processedFile.type,
+          lastModified: processedFile.lastModified,
+        });
+        newFiles.set(newFileName, renamedFile);
+      }
+
+      setSelectedFiles(newFiles);
+    } catch (err) {
+      console.error('Error processing files:', err);
+    } finally {
+      hideLoader();
+      // Reset the input so the same files can be selected again
+      event.target.value = '';
+    }
   };
 
   const removeFile = (fileName: string) => {
